@@ -77,7 +77,7 @@ public abstract class ExprHandler extends EmacsPlusCaretHandler {
     for (; newOffset < maxOffset && newOffset > 0; newOffset += dir) {
       if (startOffset < 0) {
         char c = chars.charAt(newOffset);
-        if (Character.isJavaIdentifierStart(c)) {
+        if (String.valueOf(c).matches("\\w")) {
           startOffset = newOffset + (dir < 0 ? 1 : 0);
           if (dir < 0 && EditorActionUtil.isWordOrLexemeStart(editor, newOffset, false)) {
             break;
