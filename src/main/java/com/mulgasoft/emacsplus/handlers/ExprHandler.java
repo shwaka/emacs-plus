@@ -102,8 +102,12 @@ public abstract class ExprHandler extends EmacsPlusCaretHandler {
                                                                     newOffset) : new TextRange(offset, offset);
   }
 
-  private static String wordRegex = "[a-zA-Z0-9]"; // use this regex instead of \w to exclude _
-  private static String nonWordRegex = "[^a-zA-Z0-9]";
+  private final static String nonWordCharacters = "\\s!-/:-@\\[-`{-~";
+  // Compared with \w, wordRegex
+  // - contains all non-ASCII characters
+  // - does not contain _ (underscore)
+  private final static String wordRegex = String.format("[^%s]", nonWordCharacters);
+  private final static String nonWordRegex = String.format("[%s]", nonWordCharacters);
 
   private static boolean isIdentifierStart(char c) {
     // Previously this was implemented by Character.isJavaIdentifierStart(c),
