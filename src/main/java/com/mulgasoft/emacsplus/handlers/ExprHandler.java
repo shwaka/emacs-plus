@@ -67,7 +67,7 @@ public abstract class ExprHandler extends EmacsPlusCaretHandler {
     dir = dir == 0 ? -1 : dir;
     int
         startOffset =
-        !isWord || dir >= 0 && (offset >= maxOffset || Character.isJavaIdentifierStart(chars.charAt(offset)))
+        !isWord || dir >= 0 && (offset >= maxOffset || isIdentifierStart(chars.charAt(offset)))
         ? offset
         : -1;
     if (newOffset == maxOffset && startOffset < 0) {
@@ -77,17 +77,17 @@ public abstract class ExprHandler extends EmacsPlusCaretHandler {
     for (; newOffset < maxOffset && newOffset > 0; newOffset += dir) {
       if (startOffset < 0) {
         char c = chars.charAt(newOffset);
-        if (String.valueOf(c).matches("\\w")) {
+        if (isIdentifierStart(c)) {
           startOffset = newOffset + (dir < 0 ? 1 : 0);
-          if (dir < 0 && EditorActionUtil.isWordOrLexemeStart(editor, newOffset, false)) {
+          if (dir < 0 && isWordOrLexemeStart(chars, newOffset)) {
             break;
           }
         }
       } else if (dir < 0) {
-        if (EditorActionUtil.isWordOrLexemeStart(editor, newOffset, false)) {
+        if (isWordOrLexemeStart(chars, newOffset)) {
           break;
         }
-      } else if (EditorActionUtil.isWordOrLexemeEnd(editor, newOffset, false)) {
+      } else if (isWordOrLexemeEnd(chars, newOffset)) {
         break;
       }
     }
@@ -100,5 +100,22 @@ public abstract class ExprHandler extends EmacsPlusCaretHandler {
 
     return newOffset <= maxOffset && newOffset >= 0 ? new TextRange(startOffset < 0 ? newOffset : startOffset,
                                                                     newOffset) : new TextRange(offset, offset);
+  }
+
+  private static String wordRegex = "[a-zA-Z0-9]"; // use this regex instead of \w to exclude _
+  private static String nonWordRegex = "[^a-zA-Z0-9]";
+
+  private static boolean isIdentifierStart(char c) {
+    // Previously this was implemented by Character.isJavaIdentifierStart(c),
+    // but it does not treat digits as identifier start
+    return String.valueOf(c).matches(wordRegex);
+  }
+  private static boolean isWordOrLexemeStart(CharSequence chars, int offset) {
+    // Previously this was implemented by EditorActionUtil.isWordOrLexemeStart,
+    // but it treats foo_bar as a SINGLE word (considering _ as a part of a word)
+    return chars.subSequence(offset - 1, offset + 1).toString().matches(nonWordRegex + wordRegex);
+  }
+  private static boolean isWordOrLexemeEnd(CharSequence chars, int offset) {
+    return chars.subSequence(offset - 1, offset + 1).toString().matches(wordRegex + nonWordRegex);
   }
 }
